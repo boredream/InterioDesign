@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">室内设计助手</string>
+     <string name="update_info">
+        最新版本：%1$s
+        \n\n更新内容：\n%2$s
+    </string>
+    <string name="tab1">小区</string>
+    <string name="tab2">户型</string>
+    <string name="tab3">发现</string>
+    <string name="tab4">我的</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_gray"
+    android:orientation="vertical">
+
+    <include layout="@layout/include_titlebar" />
+
+    <com.boredream.bdcodehelper.view.DropDownMenu
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/ddm"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:dddividerColor="@color/divider_gray"
+        app:ddmaskColor="@color/mask_color"
+        app:ddmenuBackgroundColor="@color/white"
+        app:ddmenuSelectedIcon="@mipmap/icon_dropdown_sel_back"
+        app:ddmenuTextSize="12sp"
+        app:ddmenuUnselectedIcon="@mipmap/icon_dropdown"
+        app:ddtextSelectedColor="@color/drop_down_selected"
+        app:ddtextUnselectedColor="@color/drop_down_unselected"
+        app:ddunderlineColor="@color/gray" />
+
+</LinearLayout>

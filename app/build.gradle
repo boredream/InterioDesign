@@ -1,0 +1,68 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        applicationId "com.boredream.interiodesign"
+        minSdkVersion 15
+        targetSdkVersion 23
+        versionCode 10
+        versionName "0.1.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("boredream.keystore")
+            storePassword "58421314"
+            keyAlias "boredream"
+            keyPassword "58421314"
+        }
+    }
+
+    productFlavors {
+        common {}
+//        baidu {}
+//        qh360 {}
+//        yingyongbao {}
+        productFlavors.all { flavor ->
+            flavor.manifestPlaceholders = [UMENG_CHANNEL_VALUE: name]
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+
+    compile project(':bdcodehelper')
+    compile project(':umeng')
+
+    compile 'com.jakewharton.rxbinding:rxbinding:0.2.0'
+    compile 'com.facebook.stetho:stetho:1.2.0'
+    compile 'com.facebook.stetho:stetho-okhttp:1.2.0'
+}
