@@ -17,6 +17,6 @@ public class CommonConstants {
     /**
      * 每页加载的数量
      */
-    public static final int COUNT_OF_PAGE = 10;
+    public static final int COUNT_OF_PAGE = 20;
 
 }

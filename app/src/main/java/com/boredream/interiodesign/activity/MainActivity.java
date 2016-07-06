@@ -5,17 +5,30 @@ import android.support.v4.app.Fragment;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
+import com.boredream.bdcodehelper.entity.ListResponse;
 import com.boredream.bdcodehelper.fragment.FragmentController;
+import com.boredream.bdcodehelper.net.ObservableDecorator;
 import com.boredream.interiodesign.R;
 import com.boredream.interiodesign.base.BaseActivity;
+import com.boredream.interiodesign.base.BaseEntity;
+import com.boredream.interiodesign.entity.OpenDate;
 import com.boredream.interiodesign.fragment.CommunityFragment;
 import com.boredream.interiodesign.fragment.HouseTypeFragment;
+import com.boredream.interiodesign.net.HttpRequest;
 import com.boredream.interiodesign.utils.UpdateUtils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import rx.Observable;
+import rx.Subscriber;
 import rx.functions.Action1;
 
 
@@ -39,6 +52,88 @@ public class MainActivity extends BaseActivity implements RadioGroup.OnCheckedCh
 
         initView();
         initData();
+
+        ObservableDecorator.decorate(this, HttpRequest.getOpenDate(1, "openDate")).subscribe(
+                new Subscriber<ListResponse<OpenDate>>() {
+                    @Override
+                    public void onCompleted() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onNext(ListResponse<OpenDate> response) {
+                        for (final OpenDate od : response.getResults()) {
+                            String openDate = od.getOpen_date();
+                            if (!openDate.contains("2")) {
+                                continue;
+                            }
+
+                            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINESE);
+                            Map<String, Object> params = new HashMap<>();
+
+                            try {
+                                sdf.parse(openDate);
+                                params.put("openDate", openDate);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+
+                                StringBuilder sb = new StringBuilder();
+
+                                Pattern pattern = Pattern.compile(".*?([\\d]{4})[\\D]+?([\\d]{1,2})?([\\D]+)?([\\d]{1,2})?[\\s\\S]*");
+                                Matcher matcher = pattern.matcher(openDate);
+                                if (matcher.find()) {
+                                    String year = matcher.group(1);
+                                    String month = matcher.group(2);
+                                    String day = matcher.group(4);
+
+                                    if (year == null) {
+                                        continue;
+                                    }
+
+                                    sb.append(year);
+
+                                    if (month != null) {
+                                        sb.append("-").append(month);
+                                        if (day != null) {
+                                            sb.append("-").append(day);
+                                        }
+                                    }
+                                }
+
+                                params.put("openDate", sb.toString());
+                                showLog(sb.toString());
+                            }
+
+                            if (params.size() > 0) {
+                                ObservableDecorator.decorate(MainActivity.this,
+                                        HttpRequest.getApiService().updateOpenDate(od.getObjectId(), params)).subscribe(
+                                        new Subscriber<BaseEntity>() {
+                                            @Override
+                                            public void onCompleted() {
+
+                                            }
+
+                                            @Override
+                                            public void onError(Throwable e) {
+
+                                            }
+
+                                            @Override
+                                            public void onNext(BaseEntity baseEntity) {
+
+                                            }
+                                        }
+                                );
+                            }
+                        }
+                    }
+                }
+        );
     }
 
     private void initView() {
@@ -76,7 +171,6 @@ public class MainActivity extends BaseActivity implements RadioGroup.OnCheckedCh
                 break;
             case R.id.rb4:
                 controller.showFragment(3);
-                break;
         }
     }
 

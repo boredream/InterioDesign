@@ -16,6 +16,7 @@ import com.boredream.interiodesign.base.BaseEntity;
 import com.boredream.interiodesign.constants.CommonConstants;
 import com.boredream.interiodesign.entity.Community;
 import com.boredream.interiodesign.entity.HouseType;
+import com.boredream.interiodesign.entity.OpenDate;
 import com.boredream.interiodesign.entity.User;
 import com.boredream.interiodesign.utils.UserInfoKeeper;
 import com.bumptech.glide.Glide;
@@ -187,6 +188,15 @@ public class HttpRequest {
         Observable<ResponseBody> downloadFile(@Url String fileUrl);
 
         ////////
+        // 云函数
+        @POST("/1/functions/hello")
+        Observable<BaseEntity> cloudHello(
+                @Body Object entity);
+
+        @GET("/1/functions/scrapy")
+        Observable<BaseEntity> cloudScrapy();
+
+        ////////
 
         // 添加小区
         @POST("/1/classes/Community")
@@ -234,6 +244,33 @@ public class HttpRequest {
                 @Query("order") String order,
                 @Query("include") String include);
 
+        // 添加开盘时间
+        @POST("/1/classes/OpenDate")
+        Observable<BaseEntity> addOpenDate(
+                @Body OpenDate entity);
+
+        // 修改开盘时间
+        @PUT("/1/classes/OpenDate/{objectId}")
+        Observable<BaseEntity> updateOpenDate(
+                @Path("objectId") String objectId,
+                @Body Map<String, Object> updateInfo);
+
+        // 查询开盘时间
+        @GET("/1/classes/OpenDate")
+        Observable<ListResponse<OpenDate>> getOpenDate(
+                @Query("limit") int perPageCount,
+                @Query("skip") int page,
+                @Query("where") String where,
+                @Query("include") String include);
+
+        // 查询开盘时间-排序
+        @GET("/1/classes/OpenDate")
+        Observable<ListResponse<OpenDate>> getOpenDateOrder(
+                @Query("limit") int perPageCount,
+                @Query("skip") int page,
+                @Query("where") String where,
+                @Query("include") String include,
+                @Query("order") String order);
     }
 
     public static BmobService getApiService() {
@@ -275,6 +312,23 @@ public class HttpRequest {
     }
 
     /**
+     * 查询小区
+     *
+     * @param page
+     * @param community_id 小区类型:
+     */
+    public static Observable<ListResponse<Community>> getCommunity(int page, String community_id) {
+        BmobService service = getApiService();
+        String whereCommunity_id = "{}";
+        if (!TextUtils.isEmpty(community_id)) {
+            whereCommunity_id = "{\"community_id\":\"" + community_id + "\"}";
+        }
+        String where = whereCommunity_id;
+        return service.getCommunity(CommonConstants.COUNT_OF_PAGE,
+                (page - 1) * CommonConstants.COUNT_OF_PAGE, where, null);
+    }
+
+    /**
      * 查询户型
      */
     public static Observable<ListResponse<HouseType>> getHouseType(int page, String size, String type) {
@@ -283,34 +337,13 @@ public class HttpRequest {
         String where;
         if (!TextUtils.isEmpty(size) && TextUtils.isEmpty(type)) {
             size = size.replace("㎡", "");
-            if (size.contains("以下")) {
-                float sizeNum = Float.parseFloat(size.replace("以下", ""));
-                where = "{\"size\":{\"$lt\":" + sizeNum + "}}";
-            } else if (size.contains("以上")) {
-                float sizeNum = Float.parseFloat(size.replace("以上", ""));
-                where = "{\"size\":{\"$gte\":" + sizeNum + "}}";
-            } else {
-                float startSizeNum = Float.parseFloat(size.split("-")[0]);
-                float endSizeNum = Float.parseFloat(size.split("-")[1]);
-                where = "{\"size\":{\"$gte\":" + startSizeNum + ", \"$lt\":" + endSizeNum + "}}";
-            }
+            where = getTypeWhere(size);
         } else if (TextUtils.isEmpty(size) && !TextUtils.isEmpty(type)) {
             type = type.replace("及以上", "");
             where = "{\"typeName\":{\"$regex\":\".*" + type + ".*\"}}";
         } else if (!TextUtils.isEmpty(size) && !TextUtils.isEmpty(type)) {
-            String sizeWhere;
             size = size.replace("㎡", "");
-            if (size.contains("以下")) {
-                float sizeNum = Float.parseFloat(size.replace("以下", ""));
-                sizeWhere = "{\"size\":{\"$lt\":" + sizeNum + "}}";
-            } else if (size.contains("以上")) {
-                float sizeNum = Float.parseFloat(size.replace("以上", ""));
-                sizeWhere = "{\"size\":{\"$gte\":" + sizeNum + "}}";
-            } else {
-                float startSizeNum = Float.parseFloat(size.split("-")[0]);
-                float endSizeNum = Float.parseFloat(size.split("-")[1]);
-                sizeWhere = "{\"size\":{\"$gte\":" + startSizeNum + ", \"$lt\":" + endSizeNum + "}}";
-            }
+            String sizeWhere = getTypeWhere(size);
 
             type = type.replace("及以上", "");
             String typeWhere = "{\"typeName\":{\"$regex\":\".*" + type + ".*\"}}";
@@ -328,6 +361,22 @@ public class HttpRequest {
                 (page - 1) * CommonConstants.COUNT_OF_PAGE, where, "community");
     }
 
+    private static String getTypeWhere(String size) {
+        String where;
+        if (size.contains("以下")) {
+            float sizeNum = Float.parseFloat(size.replace("以下", ""));
+            where = "{\"size\":{\"$lt\":" + sizeNum + "}}";
+        } else if (size.contains("以上")) {
+            float sizeNum = Float.parseFloat(size.replace("以上", ""));
+            where = "{\"size\":{\"$gte\":" + sizeNum + "}}";
+        } else {
+            float startSizeNum = Float.parseFloat(size.split("-")[0]);
+            float endSizeNum = Float.parseFloat(size.split("-")[1]);
+            where = "{\"size\":{\"$gte\":" + startSizeNum + ", \"$lt\":" + endSizeNum + "}}";
+        }
+        return where;
+    }
+
     /**
      * 查询户型
      */
@@ -337,6 +386,27 @@ public class HttpRequest {
         return service.getHouseTypeOrder(300,
                 (page - 1) * 300, order, "community");
     }
+
+    /**
+     * 查询开盘时间
+     */
+    public static Observable<ListResponse<OpenDate>> getOpenDate(int page) {
+        BmobService service = getApiService();
+        String where = "{}";
+        return service.getOpenDate(CommonConstants.COUNT_OF_PAGE,
+                (page - 1) * CommonConstants.COUNT_OF_PAGE, where, "community");
+    }
+
+    /**
+     * 查询开盘时间
+     */
+    public static Observable<ListResponse<OpenDate>> getOpenDate(int page, String order) {
+        BmobService service = getApiService();
+        String where = "{}";
+        return service.getOpenDateOrder(CommonConstants.COUNT_OF_PAGE,
+                (page - 1) * CommonConstants.COUNT_OF_PAGE, where, "community", order);
+    }
+
     //////////////////////////////
 
     /**
@@ -430,3 +500,4 @@ public class HttpRequest {
     }
 
 }
+
